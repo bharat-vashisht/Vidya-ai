@@ -33,3 +33,14 @@ location or economic background.
 ## How to Run
 1. Clone this repository
 2. Install requirements:
+3. Create `.env` file and add:
+4. Run the app:
+
+## Hackathon
+Built for the **Gemma 4 Good Hackathon 2026** under the 
+Education category.
+
+## Author
+**Bharat Vashisht**
+- GitHub: [bharat-vashisht](https://github.com/bharat-vashisht)
+- Kaggle: [bharat-vashisht](https://www.kaggle.com/bharatvashisht)
