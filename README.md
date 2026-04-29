@@ -33,8 +33,17 @@ location or economic background.
 ## How to Run
 1. Clone this repository
 2. Install requirements:
+```
+py -m pip install streamlit google-generativeai python-dotenv
+```
 3. Create `.env` file and add:
+```
+GOOGLE_API_KEY=your_api_key_here
+```
 4. Run the app:
+```
+py -m streamlit run app.py
+```
 
 ## Hackathon
 Built for the **Gemma 4 Good Hackathon 2026** under the 
