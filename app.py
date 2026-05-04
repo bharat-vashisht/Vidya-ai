@@ -1,18 +1,24 @@
 import streamlit as st
-import google.generativeai as genai
 from dotenv import load_dotenv
+from google import genai
 import os
+import time 
 
 #Load API key
 load_dotenv()
-genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 
-#Primary model - Gemma 4 for hackathon
 try:
-    model = genai.GenerativeModel("models/gemma-4-26b-a4b-it")
+    api_key = os.getenv("GOOGLE_API_KEY")
+    if not api_key:
+        api_key = st.secrets["GOOGLE_API_KEY"]
 except Exception:
-    # Backup model if primary is not available
-    model = genai.GenerativeModel("models/gemma-3-12-it")
+    api_key = None
+
+if not api_key:
+    st.error("❌ API KEY NOT FOUND")
+    st.stop()
+
+client = genai.Client(api_key=api_key)
 
 #Page configuration
 st.set_page_config(page_title="Vidya AI", page_icon="🎓", layout="wide")
@@ -20,26 +26,15 @@ st.set_page_config(page_title="Vidya AI", page_icon="🎓", layout="wide")
 # Custom CSS for better look
 st.markdown("""
     <style>
-        body {
-            background-color: #f0f2f6;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        .header {
-            text-align: center;
-            padding: 20px;
+         .stButton>button {
             background-color: #4a90e2;
             color: white;
             border-radius: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
         }
-        .input-area {
-            margin-top: 30px;
-        }
-        .output-area {
-            margin-top: 30px;
-            background-color: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        .stButton>button:hover {
+            background-color: #357abd;
         }
     </style>
 """, unsafe_allow_html=True)  
@@ -56,20 +51,31 @@ st.sidebar.markdown("Your Personal AI Tutor")
 st.sidebar.markdown("---")
 
 #Language selection
-language = st.sidebar.selectbox("Select Language", ["English", "Hindi"]) 
+language = st.sidebar.selectbox("Select Language", ["English", "Hindi","Telugu","Bengali","Marathi","Gujarati","Tamil","Kannada","Odia","Punjabi"]) 
 
 #Feature selection
 feature = st.sidebar.radio(
        "Select Feature", 
-        ["💭Ask VIDYA", 
-         "📚NCERT Helper", 
-         "📄Exam Preparation", 
-         "🧑‍🏫Teacher Assistance",
-         "📊Performance Tracker"]) 
+        ["💭 Ask VIDYA", 
+         "📚 NCERT Helper", 
+         "📄 Exam Preparation", 
+         "🧑‍🏫 Teacher Assistance",
+         "📊 Performance Tracker",
+         "🎯 Quiz Mode"]) 
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("Built for Gemma 4 Good Hackathon 2026")
-st.sidebar.markdown("By Bharat Sharma")
+st.sidebar.markdown("By **Bharat Sharma**")
+
+if st.sidebar.button("TEST AI"):
+    try:
+        test = client.models.generate_content(
+            model="models/gemma-4-26b-a4b-it",
+            contents="Say hello"
+        )
+        st.success("AI WORKING ✅")
+    except Exception as e:
+        st.error(f"AI ERROR ❌: {e}")
 
 # Initialize chat history
 if "messages" not in st.session_state:
@@ -77,44 +83,98 @@ if "messages" not in st.session_state:
     
 # Helper function for language
 def get_language_prompt(language):
-    if language == "Hindi":
-        return "Answer in simple Hindi language that a rural Indian student can understand."
-    return "Answer in simple English that a rural Indian student can understand."
+        language_prompts = {
+            "Hindi": "Answer in simple Hindi language that a rural Indian student can understand.",
+            "Tamil": "Answer in simple Tamil language that a rural Indian student can understand.",
+            "Telugu": "Answer in simple Telugu language that a rural Indian student can understand.",
+            "Bengali": "Answer in simple Bengali language that a rural Indian student can understand.",
+            "Marathi": "Answer in simple Marathi language that a rural Indian student can understand.",
+            "Gujarati": "Answer in simple Gujarati language that a rural Indian student can understand.",
+            "Kannada": "Answer in simple Kannada language that a rural Indian student can understand.",
+            "Odia": "Answer in simple Odia language that a rural Indian student can understand.",
+            "Punjabi": "Answer in simple Punjabi language that a rural Indian student can understand."
+        }
+        return language_prompts.get(language, "Answer in simple English that a rural Indian student can understand.")
+
+def get_ai_response(prompt):
+    try:
+        response = client.models.generate_content(
+            model="models/gemma-4-26b-a4b-it",
+            contents=prompt
+        )
+        return response.text
+    except Exception as e:
+        try :
+            response = client.models.generate_content(
+                model="models/gemma-3-12b-it",
+                contents=prompt
+            )
+            return response.text
+        except Exception as e:
+            return f"Error gettin response: {e}"
+        
+language_greetings = {
+    "Hindi": "नमस्ते! मैं विद्या हूँ, मैं आपकी कैसे मदद कर सकती हूँ?",
+    "Tamil": "வணக்கம்! நான் வித்யா, உங்கள் AI டியூட்டர். நான் உங்களுக்கு எப்படி உதவலாம்?",
+    "Telugu": "నమస్తే! నేను విద్యా, మీ AI ట్యూటర్. నేను మీకు ఎలా సహాయం చేయగలను?",
+    "Bengali": "নমস্কার! আমি বিদ্যা, আপনার AI টিউটর. আমি কিভাবে সাহায্য করতে পারি?",
+    "Marathi": "नमस्कार! मी विद्या, तुमची AI ट्यूटर. मी तुम्हाला कशी मदत करू शकते?",
+    "Gujarati": "નમસ્તે! હું વિદ્ય, તમારી AI ટ્યુટર. હું તમને કેવી રીતે મદદ કરી શકું?",
+    "Kannada": "ನಮಸ್ಕಾರ! ನಾನು ವಿದ್ಯಾ, ನಿಮ್ಮ AI ಟ್ಯೂಟರ್. ನಾನು ನಿಮಗೆ ಹೇಗೆ ಸಹಾಯ ಮಾಡಬಹುದು?",
+    "Odia": "ନମସ୍କାର! ମୁଁ ଭିଦ୍ୟା, ଆପଣଙ୍କର AI ଟ୍ୟୁଟର. ମୁଁ ଆପଣଙ୍କୁ କିପରି ସହାୟତା କରିପାରିବି?",
+    "Punjabi": "ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ! ਮੈਂ ਵਿਦਿਆ, ਤੁਹਾਡੀ AI ਟਿਊਟਰ. ਮੈਂ ਤੁਹਾਨੂੰ ਕਿਵੇਂ ਮਦਦ ਕਰ ਸਕਦੀ ਹਾਂ?"
+}
+
+placeholders = {
+     "Hindi": "अपना सवाल यहाँ लिखें...",
+    "Tamil": "உங்கள் கேள்வியை இங்கே எழுதுங்கள்...",
+    "Telugu": "మీ ప్రశ్నను ఇక్కడ రాయండి...",
+    "Bengali": "আপনার প্রশ্ন এখানে লিখুন...",
+    "Marathi": "तुमचा प्रश्न येथे लिहा...",
+    "Gujarati": "તમારો પ્રશ્ન અહીં લખો...",
+    "Kannada": "ನಿಮ್ಮ ಪ್ರಶ್ನೆಯನ್ನು ಇಲ್ಲಿ ಬರೆಯಿರಿ...",
+    "Odia": "ଆପଣଙ୍କ ପ୍ରଶ୍ନ ଏଠାରେ ଲିଖନ୍ତୁ...",
+    "Punjabi": "ਆਪਣਾ ਸਵਾਲ ਇੱਥੇ ਲਿਖੋ...",
+}
 
 # Feature 1 - Ask VIDYA
-if feature == "💭Ask VIDYA":
+if feature == "💭 Ask VIDYA":
     st.header("💭 Ask VIDYA Anything")
-    if language == "Hindi":
-        st.markdown("VIDYA से कोई भी सवाल पूछें, चाहे वो गणित हो, विज्ञान हो या सामान्य ज्ञान।")
-    else:
-        st.write("Your personal AI teacher - available 24/7, even offline")
-        
-    #Display chat history
+    st.write(language_greetings.get(language, "Your personal AI teacher - available 24/7 to help you with your studies!"))
+
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.write(message["content"])
-            
-    #User input
-    if language == "Hindi":
-        placeholder ="अपना सवाल यहाँ लिखें..."
-    else:
-        placeholder ="Ask your stdy question here..."
-        
-    if prompt := st.chat_input(placeholder):
+
+    prompt = st.chat_input(placeholder="Type your message here...")
+
+    if prompt:
         st.session_state.messages.append({
             "role": "user",
             "content": prompt
         })
+        with st.chat_message("user"):
+            st.write(prompt)
+
         with st.chat_message("assistant"):
             with st.spinner("Thinking..."):
-                full_prompt = f"""You are VIDYA, an AI tutor designed to help rural Indian students with their studies. {get_language_prompt(language)} Use simple words, real life Indian examples and explain step by step. Question: {prompt}""" 
-                response = model.generate_content(full_prompt)
-                st.write(response.text)
-                
-        st.session_state.messages.append({
-            "role": "assistant",
-            "content": response.text
-        })
+                try:
+                    full_prompt = f"You are VIDYA... {prompt}"
+
+                    response = client.models.generate_content(
+                        model="models/gemma-4-26b-a4b-it",
+                        contents=full_prompt
+                    )
+                    st.write(response.text)
+                except Exception as e:
+                    st.error(f"AI Error: {e}")
+
+                    st.write(response.text)
+
+                    st.session_state.messages.append({
+                        "role": "assistant",
+                        "content": response.text
+                    })
         
 #Feature 2 - NCERT Helper
 elif feature =="📚 NCERT Helper":
@@ -144,16 +204,23 @@ elif feature =="📚 NCERT Helper":
     )
     
     if st.button("Get Help"):
-        with st.spinner("Fetching NCERT help..."):
-            prompt = f"""You are an expert NCERT teacher for Indian students. {get_language_prompt(language)}
-            {query_type} for {class_level} {subject} topic:{topic}
-            Use simple language, real life Indian examples and explain step by step.
-            Format your answer clearly with headings and points."""
-            response = model.generate_content(prompt)
-            st.success("Here's your NCERT help!")
-            st.write(response.text)
-    else:
-        st.warning("Please enter a topic and select what help you need.")
+        if topic:
+            with st.spinner("Fetching NCERT help..."):
+                prompt = f"""You are an expert NCERT teacher for Indian students. {get_language_prompt(language)}
+                {query_type} for {class_level} {subject} topic:{topic}
+                Use simple language, real life Indian examples and explain step by step.
+                Format your answer clearly with headings and points."""
+                try:
+                    response = client.models.generate_content(
+                        model="models/gemma-4-26b-a4b-it",
+                        contents=prompt
+                    )
+                    st.write(response.text)
+                except Exception as e:
+                    st.error(f"AI Error: {e}")
+
+        else:
+            st.warning("Please enter a topic and select what help you need.")
         
 #Feature 3 - Exam Preparation
 elif feature =="📄 Exam Preparation":
@@ -188,9 +255,15 @@ elif feature =="📄 Exam Preparation":
                 prompt = f"""You are an expert exam coach for Indian students. {get_language_prompt(language)}
                 Generate {num_questions} {question_type} questions for {class_level} {subject} topic: {topic}.
                 Provide clear answers and explanations for each question."""
-                response = model.generate_content(prompt)
-                st.success("Here are your exam questions!")
-                st.write(response.text)
+                try:
+                    response = client.models.generate_content(
+                        model="models/gemma-4-26b-a4b-it",
+                        contents=prompt
+                    )
+                    st.success("Here are your exam questions!")
+                    st.write(response.text)
+                except Exception as e:
+                    st.error(f"AI Error: {e}")
         else:
             st.warning("Please enter a topic to generate questions.")
             
@@ -232,9 +305,15 @@ elif feature =="🧑‍🏫 Teacher Assistance":
                 Subject: {subject}
                 Topic: {topic}
                 Provide clear and practical resources that can be used directly to implement {task} in the classroom."""
-                response = model.generate_content(prompt)
-                st.success(f"{task}!")
-                st.write(response.text)
+                try:
+                    response = client.models.generate_content(
+                        model="models/gemma-4-26b-a4b-it",
+                        contents=prompt
+                    )
+                    st.success(f"{task}!")
+                    st.write(response.text)
+                except Exception as e:
+                    st.error(f"AI Error: {e}")
         else:
             st.warning("Please enter a topic to get teacher assistance.")
             
@@ -278,6 +357,183 @@ elif feature =="📊 Performance Tracker":
             Give speciic, encouraging and practical study advice.
             Focus on how to improve in {worst} while maintaining strengths in {best}. 
             Consider they may not have access to internet or extra resources."""
-            response = model.generate_content(prompt)
+            try:
+                response = client.models.generate_content(
+                    model="models/gemma-4-26b-a4b-it",
+                    contents=prompt
+                )
+            except Exception as e:
+                st.error(f"AI Error: {e}")
             st.success("Personalized Study Advice:")
             st.write(response.text)
+            
+#Feature 6 - Quiz Mode
+elif feature =="🎯 Quiz Mode":
+    st.header("🎯 Quiz Mode")
+    st.write("Test your knowledge with personalized quizzes!")
+    
+    #Initialize quiz state
+    if "quiz_questions" not in st.session_state:
+        st.session_state.quiz_questions = []
+    if "quiz_score" not in st.session_state:
+        st.session_state.quiz_score = 0
+    if "quiz_started" not in st.session_state:
+        st.session_state.quiz_started = False
+    if "current_question" not in st.session_state:
+        st.session_state.current_question = 0
+    if "quiz_answers" not in st.session_state:
+        st.session_state.quiz_answers = []
+        
+    if not st.session_state.quiz_started:
+        #Quiz setup
+        col1, col2 = st.columns(2)
+        with col1:
+            class_level = st.selectbox(
+                "Select Class:",
+                [f"Class {i}" for i in range(6,13)]
+            )
+        with col2:
+            quiz_subject = st.selectbox(
+                "Select Subject:",
+                ["Mathematics","Science","Physics",
+                 "Chemistry","Biology","History",
+                 "Geography","Economics","English"]
+            )
+            
+        quiz_topic = st.text_input("Enter the quiz topic:")
+        num_questions = st.slider("Number of questions:", 3, 20, 5)
+        
+        if st.button("Start Quiz"):
+            if quiz_topic:
+                with st.spinner("Generating quiz questions..."):
+                    prompt = f"""Generate exactly {num_questions} MCQ 
+                    questions for {class_level} {quiz_subject} 
+                    on topic: {quiz_topic}
+                    {get_language_prompt(language)}
+                    
+                    Format EXACTLY like this for each question:
+                    Q: [question]
+                    A) [option]
+                    B) [option]
+                    C) [option]
+                    D) [option]
+                    Answer: [correct letter]
+                    
+                    Number each question and separate with ---"""
+                    
+                    try:
+                        response = client.models.generate_content(
+                            model="models/gemma-4-26b-a4b-it",
+                            contents=prompt
+                        )
+                        st.write(response.text)
+                    except Exception as e:
+                        st.error(f"AI Error: {e}")
+                    
+                    # Parse Questions
+                    questions = []
+                    raw_questions = response.text.split("---")
+                    for q in raw_questions:
+                        if "Q:" in q and "Answer:" in q:
+                            questions.append(q.strip())
+                        
+                    st.session_state.quiz_questions = questions
+                    st.session_state.quiz_started = True
+                    st.session_state.current_question = 0
+                    st.session_state.quiz_score = 0
+                    st.session_state.quiz_answers = []
+            else:
+                st.warning("Please enter a quiz topic to start.")
+                
+    else:
+        #Quiz in progress
+        total = len(st.session_state.quiz_questions)
+        current = st.session_state.current_question
+        
+        if current < total:
+            #Show progress
+            st.progress((current)/total)
+            st.write(f"Question {current+1} of {total}")
+            st.metric("Current Score", f"{st.session_state.quiz_score} / {current}")
+            
+            #show question
+            question = st.session_state.quiz_questions[current]
+            st.markdown(f"**{question.split('Answer:')[0].strip()}**")
+            
+            #Get Answer
+            answer = st.radio("Select your answer:", ["A", "B", "C", "D"],
+                              key=f"answer_{current}")
+            
+            if st.button("Submit Answer", key=f"submit_{current}"):
+                #Check answer
+                correct = question.split("Answer:")[-1].strip()[0]
+                if answer == correct:
+                    st.success("Correct! 🎉")
+                    st.session_state.quiz_score += 1
+                else:
+                    st.error(f"Wrong! The correct answer was {correct}.")
+                    
+                st.session_state.current_question += 1
+                st.session_state.quiz_answers.append(
+                    {"question": question, 
+                     "your_answer": answer,
+                     "correct_answer": correct,
+                     "correct": answer == correct}
+                )
+                import time
+                time.sleep(1)
+                st.rerun()
+            
+        else:
+            #Quiz completed
+            score = st.session_state.quiz_score
+            total = len(st.session_state.quiz_questions)
+            percentage = (score/total)*100
+            
+            st.balloons()
+            st.header("Quiz Completed!🎉")
+            
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric("Final Score", f"{score} / {total}")
+            with col2:
+                st.metric("Percentage", f"{percentage:.2f}%")
+            with col3:
+                if percentage >= 80:
+                    st.metric("Performance", "Excellent! Keep it up! 🌟")
+                elif percentage >= 50:
+                    st.metric("Performance", "Good effort! A little more practice will help! 👍")
+                else:
+                    st.metric("Performance", "Don't worry! Review the material and try again! 💪")
+                    
+            #Show answer review
+            st.subheader("Answer Review:")
+            for ans in st.session_state.quiz_answers:
+                if ans["correct"]:
+                    st.markdown(f"✅ **{ans['question'].split('Answer:')[0].strip()}** - Your answer: {ans['your_answer']} (Correct)")
+                else:
+                    st.markdown(f"❌ **{ans['question'].split('Answer:')[0].strip()}** - Your answer: {ans['your_answer']} (Correct answer: {ans['correct_answer']})")
+                    
+            #Get AI feedback
+            with st.spinner("Getting personalized feedback..."):
+                prompt = f"""A student scored {score}/{total} 
+                ({percentage:.1f}%) on a quiz.
+                {get_language_prompt(language)}
+                Give encouraging and specific advice to improve.
+                Keep it short and motivating!"""
+                try:
+                    response = client.models.generate_content(
+                        model="models/gemma-4-26b-a4b-it",
+                        contents=prompt
+                    )
+                    st.info(response.text)
+                except Exception as e:
+                    st.error(f"AI Error: {e}")
+
+            if st.button("Start New Quiz"):
+                st.session_state.quiz_started = False
+                st.session_state.quiz_questions = []
+                st.session_state.quiz_score = 0
+                st.session_state.current_question = 0
+                st.session_state.quiz_answers = []
+                st.rerun()
