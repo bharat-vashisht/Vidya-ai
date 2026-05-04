@@ -54,3 +54,6 @@ Education category.
 **Bharat Vashisht**
 - GitHub: [bharat-vashisht](https://github.com/bharat-vashisht)
 - Kaggle: [bharat-vashisht](https://www.kaggle.com/bharatvashisht)
+
+## 🌐 Live Demo
+Try Vidya AI: [Click Here](https://vidya-ai-bharat-sharma.streamlit.app/)
