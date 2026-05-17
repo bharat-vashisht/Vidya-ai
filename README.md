@@ -27,6 +27,7 @@ location or economic background.
 - 📝 **Exam Preparation** — Auto generated practice questions
 - 👨‍🏫 **Teacher Assistant** — Lesson plans and worksheets
 - 📊 **Performance Tracker** — Personalized study advice
+- 🎯 **Quiz Mode** - Training with ai random questions
 
 ## Tech Stack
 - **Gemma 4** — AI backbone (gemma-4-26b-a4b-it)
@@ -63,3 +64,6 @@ Education category.
 **Bharat Vashisht**
 - GitHub: [bharat-vashisht](https://github.com/bharat-vashisht)
 - Kaggle: [bharat-vashisht](https://www.kaggle.com/bharatvashisht)
+
+## 🌐 Live Demo
+Try Vidya AI: [Click Here](https://vidya-ai-bharat-sharma.streamlit.app/)
