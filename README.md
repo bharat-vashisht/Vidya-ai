@@ -2,7 +2,7 @@
 ### Empowering Every Student — Anytime, Anywhere!
 
 ## 🌐 Live Demo
-👉 **Try Vidya AI here:** [Click Here](your_streamlit_url)
+👉 **Try Vidya AI here:** [Click Here](https://vidya-ai-bharat-sharma.streamlit.app/)
 
 ## 🎬 Demo Video
 👉 **Watch Demo:** [Coming Soon]
