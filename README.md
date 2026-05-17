@@ -1,6 +1,16 @@
 # Vidya AI 🎓
 ### Empowering Every Student — Anytime, Anywhere!
 
+## 🌐 Live Demo
+👉 **Try Vidya AI here:** [Click Here](https://vidya-ai-bharat-sharma.streamlit.app/)
+
+## 🎬 Demo Video
+👉 **Watch Demo:** [Coming Soon]
+
+## 🏆 Hackathon
+Built for **Gemma 4 Good Hackathon 2026**
+Category: **Education**
+
 ## Problem Statement
 600 million Indians have limited or no internet access. Rural students 
 lack access to quality education and personalized learning assistance. 
